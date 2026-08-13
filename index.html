@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>لوحة الإدارة الشاملة - GOSAT PLUS</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <style>
+        :root {
+            --bg-main: #0b1120;
+            --card-bg: #131d31;
+            --card-border: #1e2d4a;
+            --text-white: #ffffff;
+            --text-gray: #94a3b8;
+            --accent-blue: #2563eb;
+            --accent-green: #10b981;
+            --accent-red: #ef4444;
+            --accent-gold: #f59e0b;
+        }
+
+        * { box-sizing: border-box; font-family: 'Cairo', sans-serif; margin: 0; padding: 0; }
+        body { background-color: var(--bg-main); color: var(--text-white); padding: 20px 10px; min-height: 100vh; }
+        .container { max-width: 550px; margin: 0 auto; }
+
+        .admin-card {
+            background: var(--card-bg); border: 1px solid var(--card-border);
+            border-radius: 12px; padding: 15px; margin-bottom: 15px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+        }
+
+        h2, h3, h4 { color: var(--accent-gold); text-align: center; margin-bottom: 12px; }
+        label { font-size: 0.8rem; color: var(--text-gray); display: block; margin-top: 8px; }
+        
+        input, select {
+            width: 100%; padding: 9px; margin-top: 4px; border-radius: 6px;
+            border: 1px solid var(--card-border); background: #0f172a; color: #fff; font-size: 0.85rem;
+        }
+
+        .admin-btn {
+            width: 100%; padding: 10px; border-radius: 8px; border: none;
+            font-weight: 700; cursor: pointer; margin-top: 12px; font-size: 0.9rem;
+        }
+        .btn-blue { background: var(--accent-blue); color: #fff; }
+        .btn-green { background: var(--accent-green); color: #fff; }
+        .btn-red { background: var(--accent-red); color: #fff; }
+
+        .sub-box {
+            background: #0f172a; border: 1px dashed var(--card-border);
+            border-radius: 8px; padding: 10px; margin-top: 10px;
+        }
+
+        .login-wrapper { max-width: 360px; margin: 60px auto; text-align: center; }
+        .flex-row { display: flex; gap: 8px; }
+        .flex-row > div { flex: 1; }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+
+        <!-- شاشة تسجيل الدخول -->
+        <div id="login-box" class="admin-card login-wrapper">
+            <h2>لوحة التحكم الإدارية 🔒</h2>
+            <label>أدخل كلمة السر الخاصة بك:</label>
+            <input type="password" id="pass-input" placeholder="***">
+            <button class="admin-btn btn-blue" onclick="checkPass()">دخول اللوحة</button>
+        </div>
+
+        <!-- اللوحة الشاملة بالكامل -->
+        <div id="panel-box" style="display: none;">
+            
+            <h2>لوحة التحكم الموحدة ⚙️</h2>
+
+            <!-- 1. تحديث التاريخ -->
+            <div class="admin-card">
+                <h3>تحديث تاريخ اليوم</h3>
+                <input type="text" id="adm-date-text" placeholder="الأربعاء، 12 أغسطس 2026">
+                <button class="admin-btn btn-green" onclick="saveDateOnly()">تحديث التاريخ فقط</button>
+            </div>
+
+            <!-- 2. إضافة مباراة جديدة -->
+            <div class="admin-card">
+                <h3>1️⃣ إضافة / تعديل مباراة</h3>
+                <label>اسم البطولة:</label>
+                <input type="text" id="adm-tournament" placeholder="دوري أبطال أوروبا">
+                <label>موعد المباراة:</label>
+                <input type="text" id="adm-time" placeholder="22:00">
+                
+                <div class="flex-row">
+                    <div>
+                        <label>الفريق الأول:</label>
+                        <input type="text" id="adm-t1-name" placeholder="الاسم">
+                        <input type="text" id="adm-t1-img" placeholder="رابط اللوجو">
+                    </div>
+                    <div>
+                        <label>الفريق الثاني:</label>
+                        <input type="text" id="adm-t2-name" placeholder="الاسم">
+                        <input type="text" id="adm-t2-img" placeholder="رابط اللوجو">
+                    </div>
+                </div>
+
+                <label>المعلق:</label>
+                <input type="text" id="adm-comm" placeholder="اسم المعلق">
+                <label>القناة الرئيسية:</label>
+                <input type="text" id="adm-main-ch" placeholder="bein sports 1">
+                <label>القناة الصوتية:</label>
+                <input type="text" id="adm-audio" placeholder="Audio 1">
+
+                <button class="admin-btn btn-blue" onclick="saveMatch()">حفظ بيانات المباراة</button>
+            </div>
+
+            <!-- 3. إضافة القنوات الناقلة للمباراة -->
+            <div class="admin-card">
+                <h3 style="color:var(--accent-green);">2️⃣ إضافة قناة ناقلة لمباراة</h3>
+                <label>اختر المباراة:</label>
+                <select id="adm-select-match-ch"></select>
+                
+                <label>اسم القناة وصورتها:</label>
+                <input type="text" id="adm-ch-name" placeholder="اسم القناة">
+                <input type="text" id="adm-ch-img" placeholder="رابط اللوجو">
+                
+                <div class="flex-row">
+                    <div>
+                        <label>القمر:</label>
+                        <input type="text" id="adm-ch-sat" placeholder="Nilesat">
+                    </div>
+                    <div>
+                        <label>التردد:</label>
+                        <input type="text" id="adm-ch-freq" placeholder="11013">
+                    </div>
+                </div>
+                <div class="flex-row">
+                    <div>
+                        <label>الاستقطاب:</label>
+                        <input type="text" id="adm-ch-polar" placeholder="H / V">
+                    </div>
+                    <div>
+                        <label>معدل الترميز:</label>
+                        <input type="text" id="adm-ch-rate" placeholder="27500">
+                    </div>
+                </div>
+                <button class="admin-btn btn-green" onclick="addChannelToMatch()">إضافة القناة الناقلة</button>
+            </div>
+
+            <!-- 4. إضافة التايم شيفت للمباراة -->
+            <div class="admin-card">
+                <h3 style="color:var(--accent-gold);">3️⃣ إضافة تايم شيفت لمباراة</h3>
+                <label>اختر المباراة:</label>
+                <select id="adm-select-match-ts"></select>
+                
+                <label>اسم قناة التايم شيفت وصورتها:</label>
+                <input type="text" id="adm-ts-chname" placeholder="اسم القناة">
+                <input type="text" id="adm-ts-img" placeholder="رابط صورة القناة">
+                
+                <div class="flex-row">
+                    <div>
+                        <label>القمر:</label>
+                        <input type="text" id="adm-ts-sat" placeholder="القمر">
+                    </div>
+                    <div>
+                        <label>التردد:</label>
+                        <input type="text" id="adm-ts-freq" placeholder="التردد">
+                    </div>
+                </div>
+                <div class="flex-row">
+                    <div>
+                        <label>الاستقطاب:</label>
+                        <input type="text" id="adm-ts-polar" placeholder="H / V">
+                    </div>
+                    <div>
+                        <label>معدل الترميز:</label>
+                        <input type="text" id="adm-ts-rate" placeholder="27500">
+                    </div>
+                </div>
+
+                <label>القناة الصوتية والتأخير (بالثواني) واسم الريسيفر:</label>
+                <input type="text" id="adm-ts-audio" placeholder="الصوتية الأولى">
+                <input type="text" id="adm-ts-delay" placeholder="مثال: 5">
+                <input type="text" id="adm-ts-receiver" placeholder="اسم الريسيفر الأساسي">
+                <label>ريسيفرات تحمل نفس التايم شيفت (مفصولة بفواصل):</label>
+                <input type="text" id="adm-ts-same" placeholder="سناتور, نوفا, غزال">
+
+                <button class="admin-btn btn-blue" onclick="addTimeshiftToMatch()">إضافة التايم شيفت</button>
+            </div>
+
+            <!-- 5. إدارة وحذف المباريات الحالية -->
+            <div class="admin-card">
+                <h3 style="color:var(--accent-red);">المباريات المضافة حالياً</h3>
+                <div id="adm-matches-list">جاري التحميل...</div>
+            </div>
+
+        </div>
+
+    </div>
+
+    <!-- اتصال Firebase (للكتابة والتحديث المباشر) -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getFirestore, doc, onSnapshot, setDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyC_CKgSs7ajVzcCdJyqLQfqrXPl7DjJPo0",
+            authDomain: "gosat-plus-2.firebaseapp.com",
+            projectId: "gosat-plus-2",
+            storageBucket: "gosat-plus-2.firebasestorage.app",
+            messagingSenderId: "811325857294",
+            appId: "1:811325857294:web:19bc8af8d43b3cfa17a65f",
+            measurementId: "G-M9WYVYD00G"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const docRef = doc(db, "gosat_data", "main_data");
+
+        window.dbData = { todayDateText: "الأربعاء، 12 أغسطس 2026", matchesData: [] };
+
+        onSnapshot(docRef, (snapshot) => {
+            if (snapshot.exists()) {
+                window.dbData = snapshot.data();
+                if(!window.dbData.matchesData) window.dbData.matchesData = [];
+            }
+            renderAll();
+        });
+
+        window.saveDataToCloud = async function() {
+            await setDoc(docRef, window.dbData);
+            alert("تم حفظ التعديلات وتحديث الموقع الرئيسي بنجاح!");
+        };
+    </script>
+
+    <script>
+        function checkPass() {
+            const p = document.getElementById('pass-input').value;
+            if (p === "108") {
+                document.getElementById('login-box').style.display = 'none';
+                document.getElementById('panel-box').style.display = 'block';
+            } else {
+                alert("كلمة السر غير صحيحة!");
+            }
+        }
+
+        function renderAll() {
+            document.getElementById('adm-date-text').value = window.dbData.todayDateText || '';
+            updateSelectBoxes();
+            renderAdminMatchesList();
+        }
+
+        function saveDateOnly() {
+            window.dbData.todayDateText = document.getElementById('adm-date-text').value;
+            window.saveDataToCloud();
+        }
+
+        function saveMatch() {
+            const tournament = document.getElementById('adm-tournament').value;
+            const time = document.getElementById('adm-time').value;
+            const t1Name = document.getElementById('adm-t1-name').value;
+            const t1Img = document.getElementById('adm-t1-img').value;
+            const t2Name = document.getElementById('adm-t2-name').value;
+            const t2Img = document.getElementById('adm-t2-img').value;
+            const comm = document.getElementById('adm-comm').value;
+            const mainChannel = document.getElementById('adm-main-ch').value;
+            const audioTrack = document.getElementById('adm-audio').value;
+
+            if(!t1Name || !t2Name) { alert("أدخل أسماء الفريقين!"); return; }
+
+            const newM = {
+                id: Date.now(),
+                tournament, time, t1Name, t1Img, t2Name, t2Img,
+                comm, mainChannel, audioTrack,
+                channels: [], timeshifts: []
+            };
+
+            window.dbData.matchesData.push(newM);
+            window.saveDataToCloud();
+
+            document.getElementById('adm-t1-name').value = '';
+            document.getElementById('adm-t2-name').value = '';
+        }
+
+        function updateSelectBoxes() {
+            const matches = window.dbData.matchesData || [];
+            const opts = matches.map((m, i) => `<option value="${i}">${m.t1Name} VS ${m.t2Name}</option>`).join('');
+            document.getElementById('adm-select-match-ch').innerHTML = opts;
+            document.getElementById('adm-select-match-ts').innerHTML = opts;
+        }
+
+        function addChannelToMatch() {
+            const idx = document.getElementById('adm-select-match-ch').value;
+            if(idx === "" || !window.dbData.matchesData[idx]) return;
+
+            const ch = {
+                id: Date.now(),
+                name: document.getElementById('adm-ch-name').value,
+                img: document.getElementById('adm-ch-img').value,
+                sat: document.getElementById('adm-ch-sat').value,
+                freq: document.getElementById('adm-ch-freq').value,
+                polar: document.getElementById('adm-ch-polar').value,
+                rate: document.getElementById('adm-ch-rate').value
+            };
+
+            if(!window.dbData.matchesData[idx].channels) window.dbData.matchesData[idx].channels = [];
+            window.dbData.matchesData[idx].channels.push(ch);
+            window.saveDataToCloud();
+        }
+
+        function addTimeshiftToMatch() {
+            const idx = document.getElementById('adm-select-match-ts').value;
+            if(idx === "" || !window.dbData.matchesData[idx]) return;
+
+            const ts = {
+                id: Date.now(),
+                chName: document.getElementById('adm-ts-chname').value,
+                img: document.getElementById('adm-ts-img').value,
+                sat: document.getElementById('adm-ts-sat').value,
+                freq: document.getElementById('adm-ts-freq').value,
+                polar: document.getElementById('adm-ts-polar').value,
+                rate: document.getElementById('adm-ts-rate').value,
+                audio: document.getElementById('adm-ts-audio').value,
+                delay: document.getElementById('adm-ts-delay').value,
+                receiver: document.getElementById('adm-ts-receiver').value,
+                sameReceivers: document.getElementById('adm-ts-same').value
+            };
+
+            if(!window.dbData.matchesData[idx].timeshifts) window.dbData.matchesData[idx].timeshifts = [];
+            window.dbData.matchesData[idx].timeshifts.push(ts);
+            window.saveDataToCloud();
+        }
+
+        function renderAdminMatchesList() {
+            const container = document.getElementById('adm-matches-list');
+            container.innerHTML = (window.dbData.matchesData || []).map((m, i) => `
+                <div style="background:#0f172a; border:1px solid var(--card-border); padding:8px 12px; border-radius:6px; margin-top:6px; display:flex; justify-content:space-between; align-items:center;">
+                    <span><strong>${m.t1Name} VS ${m.t2Name}</strong> <small style="color:var(--text-gray);">(${m.tournament || ''})</small></span>
+                    <button onclick="deleteMatch(${i})" class="admin-btn btn-red" style="width:auto; padding:4px 10px; font-size:0.75rem; margin:0;">حذف</button>
+                </div>
+            `).join('') || '<div style="text-align:center; color:var(--text-gray);">لا توجد مباريات مضافة حالياً</div>';
+        }
+
+        function deleteMatch(i) {
+            if(confirm("هل أنت متأكد من حذف هذه المباراة بجميع القنوات والتايم شيفت التابع لها؟")) {
+                window.dbData.matchesData.splice(i, 1);
+                window.saveDataToCloud();
+            }
+        }
+    </script>
+</body>
+</html>
