@@ -55,19 +55,40 @@
             background: #0f172a; border: 1px solid var(--card-border);
             border-radius: 10px; padding: 12px; margin-top: 10px;
         }
-        .match-actions {
-            display: flex; gap: 8px; margin-top: 10px; border-top: 1px dashed var(--card-border); padding-top: 8px;
+        .match-row-main {
+            display: flex; justify-content: space-between; align-items: center; gap: 10px;
         }
-        .match-actions button { margin: 0; padding: 6px 10px; font-size: 0.8rem; }
+        .match-actions-btns {
+            display: flex; gap: 8px; align-items: center;
+        }
+        .btn-edit-green {
+            background: #10b981 !important; color: #ffffff !important; border: none; border-radius: 6px;
+            padding: 6px 14px; font-weight: 700; font-size: 0.85rem; cursor: pointer; display: inline-block;
+        }
+        .btn-del-red {
+            background: #ef4444 !important; color: #ffffff !important; border: none; border-radius: 6px;
+            padding: 6px 14px; font-weight: 700; font-size: 0.85rem; cursor: pointer; display: inline-block;
+        }
         
         .sub-items-list {
-            background: #131d31; border-radius: 6px; padding: 6px; margin-top: 6px; font-size: 0.78rem;
+            background: #131d31; border-radius: 6px; padding: 6px; margin-top: 8px; font-size: 0.78rem;
         }
         .sub-item-row {
             display: flex; justify-content: space-between; align-items: center;
-            padding: 3px 0; border-bottom: 1px solid #1e2d4a;
+            padding: 4px 0; border-bottom: 1px solid #1e2d4a;
         }
         .sub-item-row:last-child { border-bottom: none; }
+        .sub-item-actions {
+            display: flex; gap: 4px; align-items: center;
+        }
+        .btn-sub-edit {
+            background: #10b981; color: #fff; border: none; border-radius: 4px;
+            padding: 2px 8px; font-size: 0.72rem; cursor: pointer; font-weight: 600;
+        }
+        .btn-sub-del {
+            background: #ef4444; color: #fff; border: none; border-radius: 4px;
+            padding: 2px 8px; font-size: 0.72rem; cursor: pointer; font-weight: 600;
+        }
     </style>
 </head>
 <body>
@@ -90,7 +111,7 @@
             <!-- 1. تحديث التاريخ -->
             <div class="admin-card">
                 <h3>تحديث تاريخ اليوم</h3>
-                <input type="text" id="adm-date-text" placeholder="مثال: الخميس، 13 أغسطس 2026">
+                <input type="text" id="adm-date-text" placeholder="مثال: الأحد، 16 أغسطس 2026">
                 <button class="admin-btn btn-green" onclick="saveDateOnly()">تحديث وحفظ التاريخ</button>
             </div>
 
@@ -100,7 +121,7 @@
                 <input type="hidden" id="adm-edit-id" value="">
                 
                 <label>اسم البطولة:</label>
-                <input type="text" id="adm-tournament" placeholder="دوري أبطال أوروبا">
+                <input type="text" id="adm-tournament" placeholder="الدوري الإنجليزي">
                 <label>موعد المباراة:</label>
                 <input type="text" id="adm-time" placeholder="22:00">
                 
@@ -128,9 +149,12 @@
                 <button class="admin-btn btn-gold" id="adm-cancel-btn" style="display:none;" onclick="cancelEdit()">إلغاء التعديل</button>
             </div>
 
-            <!-- 3. إضافة القنوات الناقلة -->
+            <!-- 3. إضافة وتعديل القنوات الناقلة -->
             <div class="admin-card">
-                <h3 style="color:var(--accent-green);">2️⃣ إضافة قناة ناقلة لمباراة</h3>
+                <h3 id="form-ch-title" style="color:var(--accent-green);">2️⃣ إضافة قناة ناقلة لمباراة</h3>
+                <input type="hidden" id="adm-ch-edit-match-idx" value="">
+                <input type="hidden" id="adm-ch-edit-idx" value="">
+                
                 <label>اختر المباراة:</label>
                 <select id="adm-select-match-ch"></select>
                 
@@ -158,7 +182,8 @@
                         <input type="text" id="adm-ch-rate" placeholder="27500">
                     </div>
                 </div>
-                <button class="admin-btn btn-green" onclick="addChannelToMatch()">إضافة القناة الناقلة</button>
+                <button class="admin-btn btn-green" id="adm-ch-submit-btn" onclick="addChannelToMatch()">إضافة القناة الناقلة</button>
+                <button class="admin-btn btn-gold" id="adm-ch-cancel-btn" style="display:none;" onclick="cancelChEdit()">إلغاء تعديل القناة</button>
             </div>
 
             <!-- 4. إضافة التايم شيفت -->
@@ -204,7 +229,7 @@
 
             <!-- 5. إدارة وحذف وتعديل المباريات الحالية -->
             <div class="admin-card">
-                <h3 style="color:var(--accent-red);">المباريات المنشورة حالياً</h3>
+                <h3 style="color:var(--accent-red);">المباريات المضافة حالياً</h3>
                 <div id="adm-matches-list">جاري التحميل...</div>
             </div>
 
@@ -249,7 +274,7 @@
                 await setDoc(docRef, window.dbData);
                 alert("تم حفظ التعديلات بنجاح وتحديث الموقع!");
             } catch(e) {
-                alert("❌ خطأ في الحفظ، تأكد من قواعد Firebase!");
+                alert("❌ خطأ في الحفظ، تأكد من اتصال الإنترنت!");
                 console.error(e);
             }
         };
@@ -273,7 +298,7 @@
 
         function saveDateOnly() {
             const dateVal = document.getElementById('adm-date-text').value;
-            if(!dateVal) { alert("أدخل النص أولاً!"); return; }
+            if(!dateVal) { alert("أدخل نص التاريخ أولاً!"); return; }
             window.dbData.todayDateText = dateVal;
             window.saveDataToCloud();
         }
@@ -293,8 +318,7 @@
             if(!t1Name || !t2Name) { alert("أدخل أسماء الفريقين!"); return; }
 
             if (editId) {
-                // تعديل مباراة قائمة
-                const matchIndex = window.dbData.matchesData.findIndex(m => m.id == editId);
+                const matchIndex = window.dbData.matchesData.findIndex(m => String(m.id) === String(editId));
                 if (matchIndex !== -1) {
                     window.dbData.matchesData[matchIndex].tournament = tournament;
                     window.dbData.matchesData[matchIndex].time = time;
@@ -307,7 +331,6 @@
                     window.dbData.matchesData[matchIndex].audioTrack = audioTrack;
                 }
             } else {
-                // إضافة مباراة جديدة
                 const newM = {
                     id: Date.now(),
                     tournament, time, t1Name, t1Img, t2Name, t2Img,
@@ -321,9 +344,11 @@
             cancelEdit();
         }
 
-        function editMatch(matchId) {
-            const m = window.dbData.matchesData.find(item => item.id == matchId);
+        function editMatchByIndex(mIdx) {
+            const m = window.dbData.matchesData[mIdx];
             if (!m) return;
+
+            if (!m.id) m.id = Date.now();
 
             document.getElementById('adm-edit-id').value = m.id;
             document.getElementById('adm-tournament').value = m.tournament || '';
@@ -363,17 +388,34 @@
         function updateSelectBoxes() {
             const matches = window.dbData.matchesData || [];
             const opts = matches.map((m, i) => `<option value="${i}">${m.t1Name} VS ${m.t2Name}</option>`).join('');
+            
+            const prevChVal = document.getElementById('adm-select-match-ch').value;
+            const prevTsVal = document.getElementById('adm-select-match-ts').value;
+            
             document.getElementById('adm-select-match-ch').innerHTML = opts;
             document.getElementById('adm-select-match-ts').innerHTML = opts;
+            
+            if(prevChVal !== "") document.getElementById('adm-select-match-ch').value = prevChVal;
+            if(prevTsVal !== "") document.getElementById('adm-select-match-ts').value = prevTsVal;
         }
 
         function addChannelToMatch() {
-            const idx = document.getElementById('adm-select-match-ch').value;
-            if(idx === "" || !window.dbData.matchesData[idx]) return;
+            const mIdx = document.getElementById('adm-select-match-ch').value;
+            const chEditIdx = document.getElementById('adm-ch-edit-idx').value;
+            const chName = document.getElementById('adm-ch-name').value;
 
-            const ch = {
+            if(mIdx === "" || !window.dbData.matchesData[mIdx]) {
+                alert("اختر المباراة أولاً!");
+                return;
+            }
+            if(!chName) {
+                alert("أدخل اسم القناة!");
+                return;
+            }
+
+            const chData = {
                 id: Date.now(),
-                name: document.getElementById('adm-ch-name').value,
+                name: chName,
                 img: document.getElementById('adm-ch-img').value,
                 sat: document.getElementById('adm-ch-sat').value,
                 freq: document.getElementById('adm-ch-freq').value,
@@ -381,9 +423,63 @@
                 rate: document.getElementById('adm-ch-rate').value
             };
 
-            if(!window.dbData.matchesData[idx].channels) window.dbData.matchesData[idx].channels = [];
-            window.dbData.matchesData[idx].channels.push(ch);
+            if(!window.dbData.matchesData[mIdx].channels) {
+                window.dbData.matchesData[mIdx].channels = [];
+            }
+
+            if (chEditIdx !== "") {
+                const oldMIdx = document.getElementById('adm-ch-edit-match-idx').value;
+                if (oldMIdx !== "" && oldMIdx != mIdx && window.dbData.matchesData[oldMIdx]) {
+                    window.dbData.matchesData[oldMIdx].channels.splice(chEditIdx, 1);
+                    window.dbData.matchesData[mIdx].channels.push(chData);
+                } else {
+                    window.dbData.matchesData[mIdx].channels[chEditIdx] = chData;
+                }
+            } else {
+                window.dbData.matchesData[mIdx].channels.push(chData);
+            }
+
             window.saveDataToCloud();
+            cancelChEdit();
+        }
+
+        function editChannel(mIdx, cIdx) {
+            const m = window.dbData.matchesData[mIdx];
+            if (!m || !m.channels || !m.channels[cIdx]) return;
+
+            const c = m.channels[cIdx];
+
+            document.getElementById('adm-ch-edit-match-idx').value = mIdx;
+            document.getElementById('adm-ch-edit-idx').value = cIdx;
+            document.getElementById('adm-select-match-ch').value = mIdx;
+
+            document.getElementById('adm-ch-name').value = c.name || '';
+            document.getElementById('adm-ch-img').value = c.img || '';
+            document.getElementById('adm-ch-sat').value = c.sat || '';
+            document.getElementById('adm-ch-freq').value = c.freq || '';
+            document.getElementById('adm-ch-polar').value = c.polar || '';
+            document.getElementById('adm-ch-rate').value = c.rate || '';
+
+            document.getElementById('form-ch-title').innerText = "2️⃣ تعديل بيانات القناة الناقلة";
+            document.getElementById('adm-ch-submit-btn').innerText = "حفظ تعديل القناة";
+            document.getElementById('adm-ch-cancel-btn').style.display = 'block';
+
+            window.scrollTo({ top: document.getElementById('form-ch-title').offsetTop - 20, behavior: 'smooth' });
+        }
+
+        function cancelChEdit() {
+            document.getElementById('adm-ch-edit-match-idx').value = '';
+            document.getElementById('adm-ch-edit-idx').value = '';
+            document.getElementById('adm-ch-name').value = '';
+            document.getElementById('adm-ch-img').value = '';
+            document.getElementById('adm-ch-sat').value = '';
+            document.getElementById('adm-ch-freq').value = '';
+            document.getElementById('adm-ch-polar').value = '';
+            document.getElementById('adm-ch-rate').value = '';
+
+            document.getElementById('form-ch-title').innerText = "2️⃣ إضافة قناة ناقلة لمباراة";
+            document.getElementById('adm-ch-submit-btn').innerText = "إضافة القناة الناقلة";
+            document.getElementById('adm-ch-cancel-btn').style.display = 'none';
         }
 
         function addTimeshiftToMatch() {
@@ -421,8 +517,11 @@
             container.innerHTML = matches.map((m, mIdx) => {
                 const chList = (m.channels || []).map((c, cIdx) => `
                     <div class="sub-item-row">
-                        <span>📺 ${c.name} (${c.sat || ''})</span>
-                        <button onclick="deleteChannel(${mIdx}, ${cIdx})" class="admin-btn btn-red" style="width:auto; padding:2px 6px; font-size:0.7rem; margin:0;">حذف القناة</button>
+                        <span>📺 ${c.name} (${c.sat || ''} - ${c.freq || ''})</span>
+                        <div class="sub-item-actions">
+                            <button type="button" onclick="editChannel(${mIdx}, ${cIdx})" class="btn-sub-edit">تعديل</button>
+                            <button type="button" onclick="deleteChannel(${mIdx}, ${cIdx})" class="btn-sub-del">حذف</button>
+                        </div>
                     </div>
                 `).join('');
 
@@ -435,15 +534,19 @@
 
                 return `
                     <div class="published-match-card">
-                        <div><strong>${m.t1Name} VS ${m.t2Name}</strong> <small style="color:var(--text-gray);">(${m.tournament || ''} - ${m.time || ''})</small></div>
+                        <div class="match-row-main">
+                            <div style="flex:1;">
+                                <strong style="font-size:0.95rem;">${m.t1Name} VS ${m.t2Name}</strong> 
+                                <small style="color:var(--text-gray); font-size:0.8rem; margin-right:4px;">(${m.tournament || ''} ${m.time ? '- ' + m.time : ''})</small>
+                            </div>
+                            <div class="match-actions-btns">
+                                <button type="button" onclick="editMatchByIndex(${mIdx})" class="btn-edit-green">تعديل</button>
+                                <button type="button" onclick="deleteMatch(${mIdx})" class="btn-del-red">حذف</button>
+                            </div>
+                        </div>
                         
                         ${chList ? `<div class="sub-items-list"><strong>القنوات الناقلة:</strong>${chList}</div>` : ''}
                         ${tsList ? `<div class="sub-items-list"><strong>التايم شيفت:</strong>${tsList}</div>` : ''}
-
-                        <div class="match-actions">
-                            <button onclick="editMatch(${m.id})" class="admin-btn btn-gold">تعديل المباراة</button>
-                            <button onclick="deleteMatch(${mIdx})" class="admin-btn btn-red">حذف المباراة بالكامل</button>
-                        </div>
                     </div>
                 `;
             }).join('');
