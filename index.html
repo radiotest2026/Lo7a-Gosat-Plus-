@@ -59,15 +59,15 @@
             display: flex; justify-content: space-between; align-items: center; gap: 10px;
         }
         .match-actions-btns {
-            display: flex; gap: 8px; align-items: center;
+            display: flex; gap: 6px; align-items: center;
         }
         .btn-edit-green {
             background: #10b981 !important; color: #ffffff !important; border: none; border-radius: 6px;
-            padding: 6px 14px; font-weight: 700; font-size: 0.85rem; cursor: pointer; display: inline-block;
+            padding: 6px 12px; font-weight: 700; font-size: 0.8rem; cursor: pointer; display: inline-block;
         }
         .btn-del-red {
             background: #ef4444 !important; color: #ffffff !important; border: none; border-radius: 6px;
-            padding: 6px 14px; font-weight: 700; font-size: 0.85rem; cursor: pointer; display: inline-block;
+            padding: 6px 12px; font-weight: 700; font-size: 0.8rem; cursor: pointer; display: inline-block;
         }
         
         .sub-items-list {
@@ -83,11 +83,11 @@
         }
         .btn-sub-edit {
             background: #10b981; color: #fff; border: none; border-radius: 4px;
-            padding: 2px 8px; font-size: 0.72rem; cursor: pointer; font-weight: 600;
+            padding: 3px 8px; font-size: 0.72rem; cursor: pointer; font-weight: 600;
         }
         .btn-sub-del {
             background: #ef4444; color: #fff; border: none; border-radius: 4px;
-            padding: 2px 8px; font-size: 0.72rem; cursor: pointer; font-weight: 600;
+            padding: 3px 8px; font-size: 0.72rem; cursor: pointer; font-weight: 600;
         }
     </style>
 </head>
@@ -186,9 +186,12 @@
                 <button class="admin-btn btn-gold" id="adm-ch-cancel-btn" style="display:none;" onclick="cancelChEdit()">إلغاء تعديل القناة</button>
             </div>
 
-            <!-- 4. إضافة التايم شيفت -->
+            <!-- 4. إضافة وتعديل التايم شيفت -->
             <div class="admin-card">
-                <h3 style="color:var(--accent-gold);">3️⃣ إضافة تايم شيفت لمباراة</h3>
+                <h3 id="form-ts-title" style="color:var(--accent-gold);">3️⃣ إضافة تايم شيفت لمباراة</h3>
+                <input type="hidden" id="adm-ts-edit-match-idx" value="">
+                <input type="hidden" id="adm-ts-edit-idx" value="">
+
                 <label>اختر المباراة:</label>
                 <select id="adm-select-match-ts"></select>
                 
@@ -224,7 +227,8 @@
                 <label>ريسيفرات تحمل نفس التايم شيفت (مفصولة بفواصل):</label>
                 <input type="text" id="adm-ts-same" placeholder="سناتور, نوفا, غزال">
 
-                <button class="admin-btn btn-blue" onclick="addTimeshiftToMatch()">إضافة التايم شيفت</button>
+                <button class="admin-btn btn-blue" id="adm-ts-submit-btn" onclick="addTimeshiftToMatch()">إضافة التايم شيفت</button>
+                <button class="admin-btn btn-gold" id="adm-ts-cancel-btn" style="display:none;" onclick="cancelTsEdit()">إلغاء تعديل التايم شيفت</button>
             </div>
 
             <!-- 5. إدارة وحذف وتعديل المباريات الحالية -->
@@ -483,12 +487,22 @@
         }
 
         function addTimeshiftToMatch() {
-            const idx = document.getElementById('adm-select-match-ts').value;
-            if(idx === "" || !window.dbData.matchesData[idx]) return;
+            const mIdx = document.getElementById('adm-select-match-ts').value;
+            const tsEditIdx = document.getElementById('adm-ts-edit-idx').value;
+            const chName = document.getElementById('adm-ts-chname').value;
 
-            const ts = {
+            if(mIdx === "" || !window.dbData.matchesData[mIdx]) {
+                alert("اختر المباراة أولاً!");
+                return;
+            }
+            if(!chName) {
+                alert("أدخل اسم قناة التايم شيفت!");
+                return;
+            }
+
+            const tsData = {
                 id: Date.now(),
-                chName: document.getElementById('adm-ts-chname').value,
+                chName: chName,
                 img: document.getElementById('adm-ts-img').value,
                 sat: document.getElementById('adm-ts-sat').value,
                 freq: document.getElementById('adm-ts-freq').value,
@@ -500,9 +514,71 @@
                 sameReceivers: document.getElementById('adm-ts-same').value
             };
 
-            if(!window.dbData.matchesData[idx].timeshifts) window.dbData.matchesData[idx].timeshifts = [];
-            window.dbData.matchesData[idx].timeshifts.push(ts);
+            if(!window.dbData.matchesData[mIdx].timeshifts) {
+                window.dbData.matchesData[mIdx].timeshifts = [];
+            }
+
+            if (tsEditIdx !== "") {
+                const oldMIdx = document.getElementById('adm-ts-edit-match-idx').value;
+                if (oldMIdx !== "" && oldMIdx != mIdx && window.dbData.matchesData[oldMIdx]) {
+                    window.dbData.matchesData[oldMIdx].timeshifts.splice(tsEditIdx, 1);
+                    window.dbData.matchesData[mIdx].timeshifts.push(tsData);
+                } else {
+                    window.dbData.matchesData[mIdx].timeshifts[tsEditIdx] = tsData;
+                }
+            } else {
+                window.dbData.matchesData[mIdx].timeshifts.push(tsData);
+            }
+
             window.saveDataToCloud();
+            cancelTsEdit();
+        }
+
+        function editTimeshift(mIdx, tIdx) {
+            const m = window.dbData.matchesData[mIdx];
+            if (!m || !m.timeshifts || !m.timeshifts[tIdx]) return;
+
+            const t = m.timeshifts[tIdx];
+
+            document.getElementById('adm-ts-edit-match-idx').value = mIdx;
+            document.getElementById('adm-ts-edit-idx').value = tIdx;
+            document.getElementById('adm-select-match-ts').value = mIdx;
+
+            document.getElementById('adm-ts-chname').value = t.chName || '';
+            document.getElementById('adm-ts-img').value = t.img || '';
+            document.getElementById('adm-ts-sat').value = t.sat || '';
+            document.getElementById('adm-ts-freq').value = t.freq || '';
+            document.getElementById('adm-ts-polar').value = t.polar || '';
+            document.getElementById('adm-ts-rate').value = t.rate || '';
+            document.getElementById('adm-ts-audio').value = t.audio || '';
+            document.getElementById('adm-ts-delay').value = t.delay || '';
+            document.getElementById('adm-ts-receiver').value = t.receiver || '';
+            document.getElementById('adm-ts-same').value = t.sameReceivers || '';
+
+            document.getElementById('form-ts-title').innerText = "3️⃣ تعديل بيانات التايم شيفت";
+            document.getElementById('adm-ts-submit-btn').innerText = "حفظ تعديل التايم شيفت";
+            document.getElementById('adm-ts-cancel-btn').style.display = 'block';
+
+            window.scrollTo({ top: document.getElementById('form-ts-title').offsetTop - 20, behavior: 'smooth' });
+        }
+
+        function cancelTsEdit() {
+            document.getElementById('adm-ts-edit-match-idx').value = '';
+            document.getElementById('adm-ts-edit-idx').value = '';
+            document.getElementById('adm-ts-chname').value = '';
+            document.getElementById('adm-ts-img').value = '';
+            document.getElementById('adm-ts-sat').value = '';
+            document.getElementById('adm-ts-freq').value = '';
+            document.getElementById('adm-ts-polar').value = '';
+            document.getElementById('adm-ts-rate').value = '';
+            document.getElementById('adm-ts-audio').value = '';
+            document.getElementById('adm-ts-delay').value = '';
+            document.getElementById('adm-ts-receiver').value = '';
+            document.getElementById('adm-ts-same').value = '';
+
+            document.getElementById('form-ts-title').innerText = "3️⃣ إضافة تايم شيفت لمباراة";
+            document.getElementById('adm-ts-submit-btn').innerText = "إضافة التايم شيفت";
+            document.getElementById('adm-ts-cancel-btn').style.display = 'none';
         }
 
         function renderAdminMatchesList() {
@@ -528,7 +604,10 @@
                 const tsList = (m.timeshifts || []).map((t, tIdx) => `
                     <div class="sub-item-row">
                         <span>⏱️ ${t.chName} (${t.delay || 0}ث - ${t.receiver || ''})</span>
-                        <button onclick="deleteTimeshift(${mIdx}, ${tIdx})" class="admin-btn btn-red" style="width:auto; padding:2px 6px; font-size:0.7rem; margin:0;">حذف التايم</button>
+                        <div class="sub-item-actions">
+                            <button type="button" onclick="editTimeshift(${mIdx}, ${tIdx})" class="btn-sub-edit">تعديل</button>
+                            <button type="button" onclick="deleteTimeshift(${mIdx}, ${tIdx})" class="btn-sub-del">حذف</button>
+                        </div>
                     </div>
                 `).join('');
 
